@@ -17,8 +17,9 @@ import {
   createUserMessage,
   deepFreeze,
 } from '@deepseek-ai/dsh-llm'
-import type { FinishReason, GenerateOptions, Message } from '@deepseek-ai/dsh-llm'
+import type { ContentBlock, FinishReason, GenerateOptions, Message } from '@deepseek-ai/dsh-llm'
 import { deadline, MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+import type { SubagentRun, SubagentRuntime, SubagentStartRequest } from '@deepseek-ai/dsh-subagent'
 import {
   generatorSystemPrompt,
   generatorUserPrompt,
@@ -165,6 +166,87 @@ export async function generateCandidates(
   return Promise.all(jobs)
 }
 
+/** Default `ctx.subagents` provider name for subagent-backed generation. */
+export const SUBAGENT_PROVIDER_DEFAULT = 'spawn'
+
+/**
+ * Phase 1 (`generation: 'subagent'`): spawn `n` parallel subagents, one
+ * candidate each, and collect their final outputs. The calling agent
+ * (`request.parent`) is required: the subagent seam derives workspace,
+ * lineage, and delegation depth from its session.
+ * @param ctx - context exposing the subagent runtime.
+ * @param config - validated plugin configuration.
+ * @param request - the verification request; `parent` must identify the caller.
+ * @param route - the resolved model route handed to each child.
+ * @param signal - fused caller+deadline signal for this batch.
+ * @returns the parallel candidates, in batch order.
+ */
+export async function generateCandidatesBySubagent(
+  ctx: Context,
+  config: VerifierConfig,
+  request: VerifyRequest,
+  route: ModelRoute,
+  signal: AbortSignal,
+): Promise<CandidateAnswer[]> {
+  const count = clampCandidateCount(request.n ?? config.n)
+  const parent = request.parent
+  if (parent === undefined) {
+    throw new Error('dsh-verifier: generation "subagent" requires the calling agent (request.parent)')
+  }
+  const runtime = subagentRuntime(ctx)
+  const game = `${generatorSystemPrompt()}\n\n${generatorUserPrompt(request)}`
+  const provider = config.subagentProvider ?? SUBAGENT_PROVIDER_DEFAULT
+  const jobs = Array.from({ length: count }, async (_, index) => {
+    const start: SubagentStartRequest = {
+      label: `verifier-candidate-${index + 1}`,
+      prompt: [{ type: 'text', text: game }],
+      parent,
+      signal,
+      agentOptions: { provider: route.provider, model: route.model },
+    }
+    const run = await runtime.start(provider, start)
+    return { index, text: await candidateText(run, index) }
+  })
+  return Promise.all(jobs)
+}
+
+/** Resolve the live subagent runtime or fail loud when no provider is composed. */
+function subagentRuntime(ctx: Context): SubagentRuntime {
+  let runtime: SubagentRuntime | undefined
+  try {
+    runtime = ctx.subagents
+  } catch {
+    runtime = undefined
+  }
+  if (runtime === undefined) {
+    throw new Error(
+      'dsh-verifier: generation "subagent" requires a loaded subagent provider '
+      + '(compose a plugin providing ctx.subagents, e.g. an in-process driver)',
+    )
+  }
+  return runtime
+}
+
+/** Extract a subagent run's final text, or fail the candidate loudly. */
+async function candidateText(run: SubagentRun, index: number): Promise<string> {
+  const result = await run.result
+  await run.dispose().catch(() => {})
+  if (result.stopReason !== 'completed') {
+    const detail = result.diagnostic === undefined
+      ? result.stopReason
+      : `${result.stopReason}: ${result.diagnostic}`
+    throw new Error(`dsh-verifier: subagent candidate ${index} failed (${detail})`)
+  }
+  const text = result.output
+    .filter((block): block is Extract<ContentBlock, { type: 'text' }> => block.type === 'text')
+    .map(block => block.text)
+    .join('')
+  if (text.trim().length === 0) {
+    throw new Error(`dsh-verifier: subagent candidate ${index} returned no text`)
+  }
+  return text
+}
+
 /** Clamp the candidate count to [1, MAX_CANDIDATES]. */
 function clampCandidateCount(n: number): number {
   if (!Number.isInteger(n) || n <= 0) {
@@ -296,7 +378,9 @@ export async function runVerification(
   using callDeadline = deadline(request.signal, config.timeoutMs, VERIFIER_TIMEOUT_CODE)
   const signal = callDeadline.signal
   signal.throwIfAborted()
-  const candidates = await generateCandidates(ctx, config, request, route, signal)
+  const candidates = config.generation === 'subagent'
+    ? await generateCandidatesBySubagent(ctx, config, request, route, signal)
+    : await generateCandidates(ctx, config, request, route, signal)
   signal.throwIfAborted()
   const verdict = strategy === 'tournament'
     ? await selectBestByTournament(ctx, config, request, route, candidates, signal)

@@ -30,11 +30,13 @@ export const inject = ['tools', 'llm']
 export const Config: z<VerifierConfig> = z.object({
   n: z.number().step(1).min(1).max(MAX_CANDIDATES).required(),
   strategy: z.union(['score', 'tournament'] as const).required(),
+  generation: z.union(['raw', 'subagent'] as const).default('raw'),
   maxOutputTokens: z.number().step(1).min(1).required(),
   timeoutMs: z.number().step(1).min(1).max(MAX_TIMER_DELAY_MS).required(),
   enabled: z.boolean().required(),
   provider: z.string(),
   model: z.string(),
+  subagentProvider: z.string(),
   autoVerify: z.boolean(),
 })
 
@@ -45,11 +47,13 @@ export const VerifierConfigSchema: z<VerifierConfig> = Config
 const CONFIG_KEYS: ReadonlySet<string> = new Set([
   'n',
   'strategy',
+  'generation',
   'maxOutputTokens',
   'timeoutMs',
   'enabled',
   'provider',
   'model',
+  'subagentProvider',
   'autoVerify',
 ])
 
@@ -75,6 +79,16 @@ export function resolveVerifierConfig(config: VerifierConfig): VerifierConfig {
   if (strategy !== 'score' && strategy !== 'tournament') {
     throw new Error('dsh-verifier: strategy must be \'score\' or \'tournament\'')
   }
+  const generationRaw = value.generation
+  const generation = generationRaw === undefined ? 'raw' : generationRaw
+  if (generation !== 'raw' && generation !== 'subagent') {
+    throw new Error('dsh-verifier: generation must be \'raw\' or \'subagent\'')
+  }
+  const hasSubagentProvider = value.subagentProvider !== undefined
+  if (hasSubagentProvider
+    && (typeof value.subagentProvider !== 'string' || value.subagentProvider.length === 0)) {
+    throw new Error('dsh-verifier: subagentProvider must be a non-empty string')
+  }
   const maxOutputTokens = value.maxOutputTokens
   if (typeof maxOutputTokens !== 'number' || !Number.isInteger(maxOutputTokens) || maxOutputTokens < 1) {
     throw new Error('dsh-verifier: maxOutputTokens must be a positive integer')
@@ -96,10 +110,12 @@ export function resolveVerifierConfig(config: VerifierConfig): VerifierConfig {
   return Object.freeze({
     n,
     strategy,
+    generation,
     maxOutputTokens,
     timeoutMs,
     enabled: value.enabled === true,
     autoVerify: value.autoVerify === true,
+    ...(hasSubagentProvider ? { subagentProvider: value.subagentProvider as string } : {}),
     ...(hasProvider ? { provider: value.provider as string, model: value.model as string } : {}),
   })
 }
@@ -176,7 +192,7 @@ export function apply(ctx: Context, config: VerifierConfig): void {
         ...(args.n !== undefined ? { n: args.n } : {}),
         ...(route !== undefined ? { route } : {}),
         signal: exec.signal,
-        ...(exec.agent !== undefined ? { sessionId: exec.agent.session.id } : {}),
+        ...(exec.agent !== undefined ? { parent: exec.agent, sessionId: exec.agent.session.id } : {}),
       }
       return ctx.verifier.verify(request).then(result => ({
         best: result.best.text,

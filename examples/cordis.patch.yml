@@ -15,6 +15,10 @@
       config:
         n: 3
         strategy: score
+        # Subagent-backed generation: each candidate is produced by one
+        # parallel subagent through `ctx.subagents` (needs a composed provider,
+        # default name `spawn`). Omit for raw concurrent model calls.
+        # generation: subagent
         maxOutputTokens: 1024
         timeoutMs: 60000
         enabled: true

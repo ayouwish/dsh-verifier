@@ -70,6 +70,7 @@ export function installAutoVerify(ctx: Context, config: VerifierConfig): void {
         strategy: config.strategy,
         signal,
         ...(route !== undefined ? { route } : {}),
+        parent: agent,
         sessionId: agent.session.id,
       })
     } catch {

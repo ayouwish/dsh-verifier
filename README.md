@@ -31,6 +31,8 @@ the settings field directly.
 | --- | --- | --- |
 | `n` | integer `[1,8]` | Number of parallel candidate generations per verification run. |
 | `strategy` | `'score' \| 'tournament'` | How the verifier selects the best candidate. |
+| `generation` | `'raw' \| 'subagent'` | How candidates are produced: `raw` (concurrent model calls, the default) or `subagent` (parallel subagents, see below). |
+| `subagentProvider` | string (optional) | The `ctx.subagents` provider name used when `generation: 'subagent'`; defaults to `spawn`. |
 | `maxOutputTokens` | integer `>= 1` | Output-token cap for each generation and verification call. |
 | `timeoutMs` | integer `>= 1` | Per-call deadline for each auxiliary model request. |
 | `enabled` | boolean | Whether verification mode is on (registers the `verify_answer` tool). |
@@ -90,6 +92,49 @@ Same per-run cost as a tool call (`n` generator + selection calls), now incurred
 
 Auxiliary calls use distinct verifier prompts and never share the conversation prefix; the replaced final answer is appended once and is prefix-stable afterward.
 
+### Subagent-backed generation (`generation: 'subagent'`)
+
+The default `raw` generation fans out bare model calls. With `generation: 'subagent'`,
+each candidate is instead produced by one parallel subagent spawned through the
+`ctx.subagents` service: `n` children are started concurrently, each receives the
+generator role plus the question as its initial prompt, the host collects every
+child's final output as one candidate, and the verifier pass then selects the
+best exactly as in raw mode. The main agent receives a single verified answer —
+never `n` raw drafts.
+
+#### What the model sees
+
+Identical tool and service surface: `verify_answer` / `ctx.verifier.verify`
+accept the same inputs. `VerifyRequest.parent` (the calling agent) is required:
+the subagent seam derives workspace, lineage, and delegation depth from its
+session. The `verify_answer` tool and auto-verify mode supply it automatically.
+
+#### Requirements
+
+- The `@deepseek-ai/dsh-subagent` runtime (a peer dependency) must be
+  reachable, and the deployment must compose a *provider* plugin that
+  registers `ctx.subagents` under `subagentProvider` (default `spawn`).
+- As of this writing the `@deepseek-ai/dsh-subagent` service is published, but
+  official provider packages (e.g. the in-process driver, `tool-subagent`) are
+  not yet on npm — so a deployment using this mode must provide its own
+  provider until official ones ship.
+- Missing pieces fail loudly at call time: no provider composed, or no calling
+  agent, produces a clear error instead of silently degrading.
+
+#### Token effect
+
+Each candidate is now a full child agent turn (system prompt assembly, session,
+any tools the child chooses to call) instead of one bounded completion, so this
+mode is strictly more expensive and slower per candidate than `raw`. In
+exchange candidates can think, use tools, and carry context — useful for hard,
+multi-step questions where shallow parallel drafts are not enough. The verifier
+selection pass itself is unchanged.
+
+#### KV Cache effect
+
+Children carry their own fresh contexts and never reuse the parent conversation
+prefix; the verifier call uses its own system prompt as in raw mode.
+
 ## Known Limitations and Deferred Work
 
 - Candidate texts are assembled from text blocks only; tool-calling candidates
@@ -100,3 +145,6 @@ Auxiliary calls use distinct verifier prompts and never share the conversation p
   dispatches `agent/verify-answer`; published `0.1.1-rc.2` does not, so the
   hook lies dormant until such a release exists. The `verify_answer` tool and
   the pipeline work regardless of that event.
+- Subagent-backed generation requires a composed `ctx.subagents` provider;
+  official provider packages are not yet published, so deployments supply their
+  own until they ship.

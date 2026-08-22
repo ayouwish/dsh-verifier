@@ -3,6 +3,11 @@
  * @module @deepseek-ai/dsh-verifier/types
  */
 
+import type { Agent } from '@deepseek-ai/dsh-agent'
+
+/** How candidate answers are produced. */
+export type GenerationSource = 'raw' | 'subagent'
+
 /** How the verifier LLM selects the best candidate. */
 export type VerifierStrategy = 'score' | 'tournament'
 
@@ -58,6 +63,8 @@ export interface VerifyRequest {
   readonly signal?: AbortSignal
   /** Session identity stamped on auxiliary calls for replay and routing. */
   readonly sessionId?: string
+  /** The calling agent; required when generation is `subagent` to spawn child agents. */
+  readonly parent?: Agent
 }
 
 /** Plugin configuration. */
@@ -66,6 +73,8 @@ export interface VerifierConfig {
   readonly n: number
   /** Default selection strategy. */
   readonly strategy: VerifierStrategy
+  /** How candidates are produced: raw parallel model calls, or parallel subagents. */
+  readonly generation: GenerationSource
   /** Output-token cap for each generation and verification call. */
   readonly maxOutputTokens: number
   /** End-to-end deadline for each auxiliary model call, in milliseconds. */
@@ -76,6 +85,8 @@ export interface VerifierConfig {
   readonly provider?: string
   /** Optional explicit model id; must be paired with `provider`. */
   readonly model?: string
+  /** `ctx.subagents` provider name for subagent generation (default `spawn`). */
+  readonly subagentProvider?: string
   /** Optional: when true (default false), every agent final answer is auto-verified (best-of-n + selection). */
   readonly autoVerify?: boolean
 }
