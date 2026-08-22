@@ -1,0 +1,20 @@
+# Example wiring for the @deepseek-ai/dsh-verifier plugin.
+#
+# Verification mode is OFF by default: nothing here is mounted unless you
+# include this snippet. To enable it, apply this patch (or copy the insert
+# block into your profile's cordis.patch.yml) and set `enabled: true`.
+#
+#   dsh --profile headless --patch ./packages/verifier/verifier/examples/cordis.patch.yml "..."
+#
+# The verifier inherits the calling agent's model route when `provider`/`model`
+# are omitted, so no route pair is required below.
+
+- insert:
+    - id: verifier
+      name: '@deepseek-ai/dsh-verifier'
+      config:
+        n: 3
+        strategy: score
+        maxOutputTokens: 1024
+        timeoutMs: 60000
+        enabled: true
