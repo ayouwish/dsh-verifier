@@ -62,6 +62,16 @@ Add the plugin to a cordis composition (for example a profile patch):
 
 The invariant companion registers under `@deepseek-ai/dsh-verifier/invariant`.
 
+For `generation: 'subagent'`, also compose the `spawn` backend so the default
+`subagentProvider: 'spawn'` resolves:
+
+```yaml
+- id: subagent
+  name: '@deepseek-ai/dsh-subagent'
+- id: subagent-spawn-in-process
+  name: '@deepseek-ai/dsh-subagent-spawn-in-process'
+```
+
 ## Model Experience
 
 ### `verify_answer` tool
@@ -112,12 +122,14 @@ session. The `verify_answer` tool and auto-verify mode supply it automatically.
 #### Requirements
 
 - The `@deepseek-ai/dsh-subagent` runtime (a peer dependency) must be
-  reachable, and the deployment must compose a *provider* plugin that
-  registers `ctx.subagents` under `subagentProvider` (default `spawn`).
-- As of this writing the `@deepseek-ai/dsh-subagent` service is published, but
-  official provider packages (e.g. the in-process driver, `tool-subagent`) are
-  not yet on npm — so a deployment using this mode must provide its own
-  provider until official ones ship.
+  reachable, and the deployment must compose a *provider* plugin that registers
+  `ctx.subagents` under `subagentProvider` (default `spawn`).
+- The `spawn` backend ships as `@deepseek-ai/dsh-subagent-spawn-in-process`
+  (registered as `spawn` by default) and is published alongside the runtime, so
+  the default `subagentProvider: 'spawn'` works as soon as the host composes
+  that backend. Other backends (`fork`, `acp`, `codex`, `claude-code`) register
+  different names — set `subagentProvider` to match the one your deployment
+  composes.
 - Missing pieces fail loudly at call time: no provider composed, or no calling
   agent, produces a clear error instead of silently degrading.
 
@@ -145,6 +157,7 @@ prefix; the verifier call uses its own system prompt as in raw mode.
   dispatches `agent/verify-answer`; published `0.1.1-rc.2` does not, so the
   hook lies dormant until such a release exists. The `verify_answer` tool and
   the pipeline work regardless of that event.
-- Subagent-backed generation requires a composed `ctx.subagents` provider;
-  official provider packages are not yet published, so deployments supply their
-  own until they ship.
+- Subagent-backed generation requires the host to compose a `ctx.subagents`
+  backend; the `spawn` backend (`@deepseek-ai/dsh-subagent-spawn-in-process`)
+  is published and matches the default `subagentProvider`, so deployments need
+  only mount it.

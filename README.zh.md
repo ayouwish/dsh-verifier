@@ -46,6 +46,15 @@ DeepSeek Harness 的 LLM-as-a-verifier（LLM 作为验证器）插件。启用�
 
 invariant 伴生插件注册在 `@deepseek-ai/dsh-verifier/invariant`。
 
+使用 `generation: 'subagent'` 时，还需组合 `spawn` 后端，使默认的 `subagentProvider: 'spawn'` 能解析：
+
+```yaml
+- id: subagent
+  name: '@deepseek-ai/dsh-subagent'
+- id: subagent-spawn-in-process
+  name: '@deepseek-ai/dsh-subagent-spawn-in-process'
+```
+
 ## 模型体验
 
 ### `verify_answer` 工具
@@ -87,7 +96,7 @@ invariant 伴生插件注册在 `@deepseek-ai/dsh-verifier/invariant`。
 #### 依赖要求
 
 - 必须能访问 `@deepseek-ai/dsh-subagent` 运行时（peer 依赖），且部署中必须组合一个提供 `ctx.subagents` 的 provider 插件，注册名即 `subagentProvider`（默认 `spawn`）。
-- 截至目前 `@deepseek-ai/dsh-subagent` 服务已发布，但官方 provider 包（如进程内驱动、`tool-subagent`）尚未发布到 npm——使用该模式的部署需自带 provider，直到官方版本发布。
+- `spawn` 后端随运行时一同发布，包名 `@deepseek-ai/dsh-subagent-spawn-in-process`（默认注册为 `spawn`），因此默认的 `subagentProvider: 'spawn'` 只要宿主组合了该后端即可直接使用。其他后端（`fork`、`acp`、`codex`、`claude-code`）注册的是不同名字——把 `subagentProvider` 设成你部署实际组合的那个即可。
 - 缺失项会在调用时响亮失败：没有组合 provider、或没有调用方 agent，都会给出清晰错误而不是静默降级。
 
 #### Token 开销
@@ -103,4 +112,4 @@ invariant 伴生插件注册在 `@deepseek-ai/dsh-verifier/invariant`。
 - 候选文本仅从文本块组装；候选请求工具调用会被明确拒绝。
 - `tournament` 串行执行（每次比较等待上一次），用延迟换取选择保真度；并行淘汰赛是后续工作。
 - 自动验证模式需要上游 `@deepseek-ai/dsh-agent-loop` 发布支持分发 `agent/verify-answer` 事件的版本；已发布的 `0.1.1-rc.2` 尚不支持，因此在该版本发布前此钩子不会触发。`verify_answer` 工具和流水线不受该事件影响。
-- 基于子 agent 的生成需要一个已组合的 `ctx.subagents` provider；官方 provider 包尚未发布，发布前需由部署自备。
+- 基于子 agent 的生成需要宿主组合一个 `ctx.subagents` 后端；`spawn` 后端（`@deepseek-ai/dsh-subagent-spawn-in-process`）已发布且与默认 `subagentProvider` 匹配，部署只需挂载它即可。
