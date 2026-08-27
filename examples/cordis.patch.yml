@@ -1,4 +1,4 @@
-# Example wiring for the @ayouwish/dsh-verifier plugin.
+# Example wiring for the @asyouwish/dsh-verifier plugin.
 #
 # Verification mode is OFF by default: nothing here is mounted unless you
 # include this snippet. To enable it, apply this patch (or copy the insert
@@ -11,7 +11,7 @@
 
 - insert:
     - id: verifier
-      name: '@ayouwish/dsh-verifier'
+      name: '@asyouwish/dsh-verifier'
       config:
         n: 3
         strategy: score

@@ -1,6 +1,6 @@
 /**
  * Shared types for the LLM-as-a-verifier pipeline.
- * @module @ayouwish/dsh-verifier/types
+ * @module @asyouwish/dsh-verifier/types
  */
 
 import type { Agent } from '@deepseek-ai/dsh-agent'

@@ -1,7 +1,7 @@
 /**
  * Verifier settings contract, shared between the host plugin (owns the section)
  * and the browser settings row that toggles auto-verification.
- * @module @ayouwish/dsh-verifier/settings
+ * @module @asyouwish/dsh-verifier/settings
  */
 
 import z from '@deepseek-ai/schemastery'

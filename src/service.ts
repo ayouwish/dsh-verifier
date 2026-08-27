@@ -5,7 +5,7 @@
  * call {@link VerifierService.verify} to run the parallel-N + verifier-select
  * pipeline. The plugin entry also exposes the same capability to the model as
  * the `verify_answer` tool (see `index.ts`).
- * @module @ayouwish/dsh-verifier/service
+ * @module @asyouwish/dsh-verifier/service
  */
 
 import { Service, type Context } from '@deepseek-ai/cordis'

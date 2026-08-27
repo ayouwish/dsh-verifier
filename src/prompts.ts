@@ -7,7 +7,7 @@
  *    (`score` strategy) or compares candidates pairwise in a knockout bracket
  *    (`tournament` strategy).
  * Verifier outputs are strict single-line JSON so the plugin can parse them.
- * @module @ayouwish/dsh-verifier/prompts
+ * @module @asyouwish/dsh-verifier/prompts
  */
 
 import type { CandidateAnswer, VerifyRequest } from './types.ts'

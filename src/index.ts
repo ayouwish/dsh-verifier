@@ -7,7 +7,7 @@
  * then a verifier model pass selects the single most suitable candidate and
  * reports the verdict. Selection is either one-pass scoring (`score`) or a
  * pairwise knockout tournament (`tournament`).
- * @module @ayouwish/dsh-verifier
+ * @module @asyouwish/dsh-verifier
  */
 
 import type { Context } from '@deepseek-ai/cordis'
