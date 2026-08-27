@@ -62,8 +62,18 @@ Add the plugin to a cordis composition (for example a profile patch):
 
 The invariant companion registers under `@asyouwish/dsh-verifier/invariant`.
 
-For `generation: 'subagent'`, also compose the `spawn` backend so the default
-`subagentProvider: 'spawn'` resolves:
+For `generation: 'subagent'`, the default `subagentProvider: 'spawn'` must
+resolve to a registered provider.
+
+> **Complete DSH hosts (the official `web` profile) already ship the full
+> subagent stack** (`subagent`, `spawn`/`fork` providers, and the subagent
+> tools) in their bundle layer — just set `generation: subagent`, nothing
+> else is needed. The verifier resolves the runtime from the composed root,
+> which stays correct even though loader entry contexts in DSH don't inherit
+> services that sibling loader entries provide.
+
+Only **minimal hosts** (a bare cordis project that does not load a DSH bundle)
+need to compose the runtime and the `spawn` backend explicitly:
 
 ```yaml
 - id: subagent
@@ -71,13 +81,6 @@ For `generation: 'subagent'`, also compose the `spawn` backend so the default
 - id: subagent-spawn-in-process
   name: '@deepseek-ai/dsh-subagent-spawn-in-process'
 ```
-
-> **Complete DSH hosts (the official `web` profile) already ship the full
-> subagent stack** (`subagent`, `spawn`/`fork` providers, and the subagent
-> tools) in their bundle layer — no extra wiring is needed there; just set
-> `generation: subagent`. The verifier resolves the runtime from the composed
-> root, which stays correct even though loader entry contexts in DSH don't
-> inherit services that sibling loader entries provide.
 
 ## Model Experience
 
