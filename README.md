@@ -72,6 +72,13 @@ For `generation: 'subagent'`, also compose the `spawn` backend so the default
   name: '@deepseek-ai/dsh-subagent-spawn-in-process'
 ```
 
+> **Complete DSH hosts (the official `web` profile) already ship the full
+> subagent stack** (`subagent`, `spawn`/`fork` providers, and the subagent
+> tools) in their bundle layer — no extra wiring is needed there; just set
+> `generation: subagent`. The verifier resolves the runtime from the composed
+> root, which stays correct even though loader entry contexts in DSH don't
+> inherit services that sibling loader entries provide.
+
 ## Model Experience
 
 ### `verify_answer` tool

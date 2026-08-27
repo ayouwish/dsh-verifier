@@ -1,7 +1,7 @@
 {
   "name": "@asyouwish/dsh-verifier",
   "description": "LLM-as-a-verifier plugin: parallel candidate generation with verifier selection",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ayouwish/dsh-verifier.git"

@@ -216,7 +216,16 @@ function subagentRuntime(ctx: Context): SubagentRuntime {
   try {
     runtime = ctx.subagents
   } catch {
+    // Loader contexts (DSH web) do not inherit services that sibling loader
+    // entries provide; the composed root carries them.
     runtime = undefined
+  }
+  if (runtime === undefined && ctx.root !== undefined) {
+    try {
+      runtime = ctx.root.subagents
+    } catch {
+      runtime = undefined
+    }
   }
   if (runtime === undefined) {
     throw new Error(
