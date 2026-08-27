@@ -8,7 +8,7 @@
  * verifier model call that either scores every candidate in one pass
  * (`score`) or compares candidates pairwise in a knockout bracket
  * (`tournament`) and returns the chosen winner.
- * @module @deepseek-ai/dsh-verifier/pipeline
+ * @module @ayouwish/dsh-verifier/pipeline
  */
 
 import type { Context } from '@deepseek-ai/cordis'

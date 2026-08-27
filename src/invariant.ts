@@ -1,13 +1,13 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-verifier`.
- * @module @deepseek-ai/dsh-verifier/invariant
+ * Package-owned invariant companion for `@ayouwish/dsh-verifier`.
+ * @module @ayouwish/dsh-verifier/invariant
  */
 
 /* jscpd:ignore-start */
 import type { Context } from '@deepseek-ai/cordis'
 import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-verifier'
+const PACKAGE_NAME = '@ayouwish/dsh-verifier'
 
 /** Cordis companion plugin name. */
 export const name = 'verifier-invariant'

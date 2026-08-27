@@ -37,7 +37,7 @@ async function boot(configLines: readonly string[]): Promise<Context> {
     "- name: '@deepseek-ai/dsh-llm'",
     "- name: '@deepseek-ai/dsh-system-prompt'",
     "- name: '@deepseek-ai/dsh-tools'",
-    "- name: '@deepseek-ai/dsh-verifier'",
+    "- name: '@ayouwish/dsh-verifier'",
     ...configLines.length > 0 ? ['  config:', ...configLines] : [],
     '',
   ].join('\n'))
@@ -51,7 +51,7 @@ async function boot(configLines: readonly string[]): Promise<Context> {
     ['@deepseek-ai/dsh-llm', LlmRuntime],
     ['@deepseek-ai/dsh-system-prompt', SystemPrompt],
     ['@deepseek-ai/dsh-tools', ToolRuntime],
-    ['@deepseek-ai/dsh-verifier', Verifier],
+    ['@ayouwish/dsh-verifier', Verifier],
   ])
   ctx.loader.internal = {
     version: 'v2',

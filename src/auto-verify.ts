@@ -4,7 +4,7 @@
  * pipeline instead of the model's single pass. This wires the
  * `agent/verify-answer` hook (added to `@deepseek-ai/dsh-agent`) to the
  * verifier service, gated by the browser-toggleable setting.
- * @module @deepseek-ai/dsh-verifier/auto-verify
+ * @module @ayouwish/dsh-verifier/auto-verify
  */
 
 // The `agent/verify-answer` waterfall event lives in `@deepseek-ai/dsh-agent`

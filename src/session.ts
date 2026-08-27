@@ -1,7 +1,7 @@
 /**
  * Session-derived helpers for auto-verification: extract the user's question
  * from the agent's session history and resolve the agent's active model route.
- * @module @deepseek-ai/dsh-verifier/session
+ * @module @ayouwish/dsh-verifier/session
  */
 
 import type { Agent } from '@deepseek-ai/dsh-agent'

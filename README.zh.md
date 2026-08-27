@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-verifier
+# @ayouwish/dsh-verifier
 
 [English](README.md) | 中文
 
@@ -35,7 +35,7 @@ DeepSeek Harness 的 LLM-as-a-verifier（LLM 作为验证器）插件。启用�
 ```yaml
 - insert:
     - id: verifier
-      name: '@deepseek-ai/dsh-verifier'
+      name: '@ayouwish/dsh-verifier'
       config:
         n: 3
         strategy: score
@@ -44,7 +44,7 @@ DeepSeek Harness 的 LLM-as-a-verifier（LLM 作为验证器）插件。启用�
         enabled: true
 ```
 
-invariant 伴生插件注册在 `@deepseek-ai/dsh-verifier/invariant`。
+invariant 伴生插件注册在 `@ayouwish/dsh-verifier/invariant`。
 
 使用 `generation: 'subagent'` 时，还需组合 `spawn` 后端，使默认的 `subagentProvider: 'spawn'` 能解析：
 

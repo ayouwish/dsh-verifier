@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-verifier
+# @ayouwish/dsh-verifier
 
 English | [中文](README.zh.md)
 
@@ -51,7 +51,7 @@ Add the plugin to a cordis composition (for example a profile patch):
 ```yaml
 - insert:
     - id: verifier
-      name: '@deepseek-ai/dsh-verifier'
+      name: '@ayouwish/dsh-verifier'
       config:
         n: 3
         strategy: score
@@ -60,7 +60,7 @@ Add the plugin to a cordis composition (for example a profile patch):
         enabled: true
 ```
 
-The invariant companion registers under `@deepseek-ai/dsh-verifier/invariant`.
+The invariant companion registers under `@ayouwish/dsh-verifier/invariant`.
 
 For `generation: 'subagent'`, also compose the `spawn` backend so the default
 `subagentProvider: 'spawn'` resolves:
