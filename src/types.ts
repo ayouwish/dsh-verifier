@@ -87,6 +87,13 @@ export interface VerifierConfig {
   readonly model?: string
   /** `ctx.subagents` provider name for subagent generation (default `spawn`). */
   readonly subagentProvider?: string
+  /**
+   * Whether candidate subagents may call tools from the composed tool scope
+   * (default `true` = inherit; `false` hides global tools from candidates).
+   * Tool effects stay inside the child's turn and never enter the candidate
+   * text itself, which is assembled from final text blocks only.
+   */
+  readonly subagentTools?: boolean
   /** Optional: when true (default false), every agent final answer is auto-verified (best-of-n + selection). */
   readonly autoVerify?: boolean
 }

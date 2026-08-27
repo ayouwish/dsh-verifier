@@ -19,6 +19,7 @@ DeepSeek Harness 的 LLM-as-a-verifier（LLM 作为验证器）插件。启用�
 | `strategy` | `'score' \| 'tournament'` | verifier 选择最佳候选的方式。 |
 | `generation` | `'raw' \| 'subagent'` | 候选的生成方式：`raw`（并发模型调用，默认）或 `subagent`（并行子 agent，见下文）。 |
 | `subagentProvider` | 字符串（可选） | `generation: 'subagent'` 时使用的 `ctx.subagents` provider 名称，默认 `spawn`。 |
+| `subagentTools` | 布尔（可选） | 候选子 agent 能否调用组合工具作用域内的工具（默认 `true` = 继承；`false` 对候选隐藏全局工具）。 |
 | `maxOutputTokens` | 整数 `>= 1` | 每次生成/验证调用的输出 token 上限。 |
 | `timeoutMs` | 整数 `>= 1` | 每个辅助模型请求的截止时间。 |
 | `enabled` | 布尔 | 是否开启验证模式（注册 `verify_answer` 工具）。 |
@@ -109,7 +110,7 @@ invariant 伴生插件注册在 `@asyouwish/dsh-verifier/invariant`。
 
 ## 已知限制与后续工作
 
-- 候选文本仅从文本块组装；候选请求工具调用会被明确拒绝。
+- 候选文本仅从最终文本块组装：候选子 agent 可以使用工具（`subagentTools`，默认开启），但工具的影响留在子回合内部，不会重放入候选答案；没有产出任何最终文本就结束回合的候选会响亮失败（"returned no text"）。
 - `tournament` 串行执行（每次比较等待上一次），用延迟换取选择保真度；并行淘汰赛是后续工作。
 - 自动验证模式需要上游 `@deepseek-ai/dsh-agent-loop` 发布支持分发 `agent/verify-answer` 事件的版本；已发布的 `0.1.1-rc.2` 尚不支持，因此在该版本发布前此钩子不会触发。`verify_answer` 工具和流水线不受该事件影响。
 - 基于子 agent 的生成需要宿主组合一个 `ctx.subagents` 后端；`spawn` 后端（`@deepseek-ai/dsh-subagent-spawn-in-process`）已发布且与默认 `subagentProvider` 匹配，部署只需挂载它即可。

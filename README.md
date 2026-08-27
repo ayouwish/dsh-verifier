@@ -33,6 +33,7 @@ the settings field directly.
 | `strategy` | `'score' \| 'tournament'` | How the verifier selects the best candidate. |
 | `generation` | `'raw' \| 'subagent'` | How candidates are produced: `raw` (concurrent model calls, the default) or `subagent` (parallel subagents, see below). |
 | `subagentProvider` | string (optional) | The `ctx.subagents` provider name used when `generation: 'subagent'`; defaults to `spawn`. |
+| `subagentTools` | boolean (optional) | Whether candidate subagents may call tools from the composed tool scope (default `true` = inherit; `false` hides global tools from candidates). |
 | `maxOutputTokens` | integer `>= 1` | Output-token cap for each generation and verification call. |
 | `timeoutMs` | integer `>= 1` | Per-call deadline for each auxiliary model request. |
 | `enabled` | boolean | Whether verification mode is on (registers the `verify_answer` tool). |
@@ -159,8 +160,10 @@ prefix; the verifier call uses its own system prompt as in raw mode.
 
 ## Known Limitations and Deferred Work
 
-- Candidate texts are assembled from text blocks only; tool-calling candidates
-  are rejected loudly.
+- Candidate texts assemble from final text blocks only: candidate subagents may
+  call tools (`subagentTools`, default on) but tool effects stay inside the
+  child's turn and never replay into the candidate answer. A candidate that
+  ends its turn without any final text fails loudly ("returned no text").
 - `tournament` runs sequentially (each comparison awaits the previous), which
   trades latency for selection fidelity; a parallel bracket is future work.
 - Auto-verify mode needs an upstream `@deepseek-ai/dsh-agent-loop` release that

@@ -196,6 +196,7 @@ export async function generateCandidatesBySubagent(
   const runtime = subagentRuntime(ctx)
   const game = `${generatorSystemPrompt()}\n\n${generatorUserPrompt(request)}`
   const provider = config.subagentProvider ?? SUBAGENT_PROVIDER_DEFAULT
+  const toolFilter = config.subagentTools === false ? { allow: [] } : undefined
   const jobs = Array.from({ length: count }, async (_, index) => {
     const start: SubagentStartRequest = {
       label: `verifier-candidate-${index + 1}`,
@@ -203,6 +204,7 @@ export async function generateCandidatesBySubagent(
       parent,
       signal,
       agentOptions: { provider: route.provider, model: route.model },
+      ...(toolFilter !== undefined ? { toolFilter } : {}),
     }
     const run = await runtime.start(provider, start)
     return { index, text: await candidateText(run, index) }

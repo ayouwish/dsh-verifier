@@ -37,6 +37,7 @@ export const Config: z<VerifierConfig> = z.object({
   provider: z.string(),
   model: z.string(),
   subagentProvider: z.string(),
+  subagentTools: z.boolean(),
   autoVerify: z.boolean(),
 })
 
@@ -54,6 +55,7 @@ const CONFIG_KEYS: ReadonlySet<string> = new Set([
   'provider',
   'model',
   'subagentProvider',
+  'subagentTools',
   'autoVerify',
 ])
 
@@ -89,6 +91,10 @@ export function resolveVerifierConfig(config: VerifierConfig): VerifierConfig {
     && (typeof value.subagentProvider !== 'string' || value.subagentProvider.length === 0)) {
     throw new Error('dsh-verifier: subagentProvider must be a non-empty string')
   }
+  const subagentTools = value.subagentTools === undefined ? true : value.subagentTools
+  if (typeof subagentTools !== 'boolean') {
+    throw new Error('dsh-verifier: subagentTools must be a boolean')
+  }
   const maxOutputTokens = value.maxOutputTokens
   if (typeof maxOutputTokens !== 'number' || !Number.isInteger(maxOutputTokens) || maxOutputTokens < 1) {
     throw new Error('dsh-verifier: maxOutputTokens must be a positive integer')
@@ -115,6 +121,7 @@ export function resolveVerifierConfig(config: VerifierConfig): VerifierConfig {
     timeoutMs,
     enabled: value.enabled === true,
     autoVerify: value.autoVerify === true,
+    subagentTools,
     ...(hasSubagentProvider ? { subagentProvider: value.subagentProvider as string } : {}),
     ...(hasProvider ? { provider: value.provider as string, model: value.model as string } : {}),
   })

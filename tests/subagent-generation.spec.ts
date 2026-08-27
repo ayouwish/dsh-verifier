@@ -59,14 +59,18 @@ class VerifierOnlyAdapter extends LlmAdapter {
 
 /** One spawned child: canned final text, counted starts, configurable name. */
 class FakeSubagentProvider {
-  readonly calls: { prompt: string; agentOptions: { provider: string; model: string } | undefined }[] = []
+  readonly calls: {
+    prompt: string
+    agentOptions: { provider: string; model: string } | undefined
+    toolFilter: { allow?: readonly string[]; deny?: readonly string[] } | undefined
+  }[] = []
   readonly provider: SubagentProvider
 
   constructor(texts: string[], name = 'fake') {
     let ordinal = 0
     this.provider = {
       name,
-      capabilities: { outputSchema: false, depthLimit: false, toolFilter: false, persona: false },
+      capabilities: { outputSchema: false, depthLimit: false, toolFilter: true, persona: false },
       inheritsParentContext: false,
       start: async (request) => {
         const index = ordinal++
@@ -76,6 +80,7 @@ class FakeSubagentProvider {
             .map(block => block.text)
             .join(''),
           agentOptions: request.agentOptions,
+          toolFilter: request.toolFilter,
         })
         const output: SubagentResult['output'] = [{ type: 'text', text: texts[index] ?? '' }]
         return {
@@ -173,6 +178,40 @@ describe('dsh-verifier subagent generation', () => {
     try {
       await expect(ctx.verifier.verify({ question: 'q' }))
         .rejects.toThrow('requires the calling agent')
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
+  it('inherits the composed tool scope by default (no toolFilter passed)', async () => {
+    const fake = new FakeSubagentProvider(['one'])
+    const { ctx } = await harness({
+      fake,
+      config: { ...BASE_CONFIG, subagentProvider: 'fake' },
+      verifierText: '{"index": 0, "score": 1, "reason": "ok"}',
+    })
+    try {
+      const result = await ctx.verifier.verify({ question: 'q', n: 1, parent: {} as Agent })
+      expect(fake.calls).toHaveLength(1)
+      expect(fake.calls[0].toolFilter).toBeUndefined()
+      expect(result.best.text).toBe('one')
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
+  it('hides global tools from candidates when subagentTools is false', async () => {
+    const fake = new FakeSubagentProvider(['one'])
+    const { ctx } = await harness({
+      fake,
+      config: { ...BASE_CONFIG, subagentProvider: 'fake', subagentTools: false },
+      verifierText: '{"index": 0, "score": 1, "reason": "ok"}',
+    })
+    try {
+      const result = await ctx.verifier.verify({ question: 'q', n: 1, parent: {} as Agent })
+      expect(fake.calls).toHaveLength(1)
+      expect(fake.calls[0].toolFilter).toEqual({ allow: [] })
+      expect(result.best.text).toBe('one')
     } finally {
       await ctx.fiber.dispose()
     }
